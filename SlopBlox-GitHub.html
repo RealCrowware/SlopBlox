@@ -114,7 +114,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  <div class="topbar">
   <span class="nav on">Play</span><span class="nav">About</span><span class="nav">Platforms</span>
   <form id="quick">
-   <input id="qu" type="text" placeholder="Username/Email/Phone" aria-label="Username">
+   <input id="qu" type="email" placeholder="Email" aria-label="Email">
    <input id="qp" type="password" placeholder="Password" aria-label="Password">
    <button class="btn" type="submit">Log in</button>
   </form>
@@ -139,6 +139,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     <select id="by" aria-label="Birth year"><option value="">Year</option></select>
    </div>
    <div class="row"><input id="su" type="text" placeholder="Username" autocomplete="off"></div>
+   <div class="row"><input id="se" type="email" placeholder="Email address" autocomplete="email"></div>
    <p class="hint">Don't use your real name</p>
    <div class="row"><input id="sp" type="password" placeholder="Password"></div>
    <div class="gender">Gender
@@ -162,7 +163,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  </div>
  <div class="shell">
   <nav class="side">
-   <a class="on" href="#" id="navHome">🏠 Home</a><a href="#" id="navProfile">👤 Profile</a><a href="#">✉ Messages</a><a href="#">👥 Friends</a>
+   <a class="on" href="#" id="navHome">🏠 Home</a><a href="#">👤 Profile</a><a href="#">✉ Messages</a><a href="#">👥 Friends</a>
    <a href="#" id="navAv">🧍 Avatar</a><a href="#">🎒 Inventory</a><a href="#">🔁 Trade</a><a href="#">👪 Groups</a>
    <a href="#">📰 My Feed</a><a href="#" id="navShop">🛍 Shop</a><a href="#">📝 Blog</a>
    <a class="up" href="#">Upgrade Now</a>
@@ -177,26 +178,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     </div>
     <h1>Hello, <span id="hi">Player</span>!</h1><button class="btn" id="editAv" style="margin-left:auto;width:auto">Customize avatar</button>
    </div>
+   <section class="sec"><div class="hd">Public profiles<a href="#" id="refreshProfiles">Refresh</a></div><div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="profileSearch" placeholder="Find a username" style="padding:9px;border:1px solid #bbb;border-radius:4px;flex:1;min-width:160px"><button class="btn" id="searchProfiles" style="width:auto">Search</button></div><div id="profileResults" style="margin-top:10px">Sign in to browse public profiles.</div></div></section>
    <section class="sec"><div class="hd">Friends (0)<a href="#">See All</a></div>
     <div class="panel"><div class="empty">You don't have any friends yet. Search for people to add.</div></div></section>
    <section class="sec"><div class="hd">Continue<a href="#">See All</a></div>
     <div class="panel"><div class="tiles" id="cont"></div></div></section>
    <section class="sec"><div class="hd">Friend Activity<a href="#">See All</a></div>
     <div class="panel"><div class="tiles" id="act"></div></div></section>
-  </main>
-  <main class="main hide" id="profileView">
-   <div class="hello" style="align-items:flex-start">
-    <div style="width:110px;height:110px;display:grid;place-items:center;background:#d5e8f6;border:1px solid var(--line);font-size:58px;flex:none">🧍</div>
-    <div style="flex:1;min-width:0">
-     <h1 id="profileName" style="margin:0 0 6px;font-size:26px;color:#222">Player</h1>
-     <div style="color:var(--grey);margin-bottom:12px">SlopBlox member</div>
-     <div style="font-size:13px">Welcome to my profile!</div>
-    </div>
-    <button class="btn" id="profileEditAv" style="width:auto">Customize avatar</button>
-   </div>
-   <section class="sec"><div class="hd">About</div><div class="panel"><b id="aboutUsername">Username: Player</b><p style="margin:8px 0 0;color:var(--grey)">This is your SlopBlox profile on this browser.</p></div></section>
-   <section class="sec"><div class="hd">Creations</div><div class="panel"><div class="empty">You haven't published any creations yet.</div></div></section>
-   <button class="btn" id="profileBack" style="width:auto">Back to home</button>
   </main>
   <main class="main hide" id="avView">
    <div class="hello"><h1>Avatar</h1><span style="color:var(--grey)">Drag to turn your avatar. Changes save automatically.</span><button class="btn" id="backHome" style="margin-left:auto;width:auto">Back to home</button></div>
@@ -213,9 +201,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  <footer>About · Jobs · Blog · Parents · Help · Terms · Privacy<br>©2019 SlopBlox. A fan-made revival, not affiliated with Roblox Corporation.</footer>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
  var $=function(s){return document.querySelector(s)};
+ var SUPABASE_URL="https://wpbsqymhmkjiuxvhvwvn.supabase.co";
+ var SUPABASE_KEY="sb_publishable_wkUmUh-eBOyq_6eOkl2XVQ_eHUSASZs";
+ var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ var currentUser=null;
  var M=["January","February","March","April","May","June","July","August","September","October","November","December"];
  M.forEach(function(m,i){$("#bm").add(new Option(m,i+1))});
  for(var d=1;d<=31;d++)$("#bd").add(new Option(d,d));
@@ -228,39 +221,59 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  function tiles(el,list){el.innerHTML=list.map(function(g){
   return '<div class="tile"><div class="th" style="background:'+g[2]+'">'+g[1]+'</div><div class="nm">'+g[0]+'</div><div class="pl">'+g[4]+' Playing</div><div class="rt"><b style="width:'+g[3]+'%"></b></div></div>'}).join("")}
  tiles($("#cont"),games.slice(0,6));tiles($("#act"),games.slice(3).concat(games.slice(0,2)));
- var currentUsername="Player";
- function enter(name){currentUsername=name;$("#who").textContent=name;$("#hi").textContent=name;$("#profileName").textContent=name;$("#aboutUsername").textContent="Username: "+name;
-  $("#login").classList.add("hide");$("#home").classList.remove("hide");window.scrollTo(0,0)}
- // Demo accounts are stored only in this browser. Passwords are salted and hashed,
- // but this client-side system is not suitable for real/public account security.
- var ACCOUNT_KEY="slopBloxAccountsV1";
- function getAccounts(){try{return JSON.parse(localStorage.getItem(ACCOUNT_KEY)||"{}")}catch(e){return {}}}
- function saveAccounts(accounts){localStorage.setItem(ACCOUNT_KEY,JSON.stringify(accounts))}
- function passwordHash(password,salt){
-  if(!window.crypto||!crypto.subtle) return Promise.reject(new Error("Secure password hashing is unavailable. Open this site over HTTPS (GitHub Pages works)."));
-  var enc=new TextEncoder();
-  return crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveBits"]).then(function(key){
-   return crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode(salt),iterations:120000,hash:"SHA-256"},key,256);
-  }).then(function(bits){return Array.from(new Uint8Array(bits)).map(function(b){return b.toString(16).padStart(2,"0")}).join("")});
+ function showError(msg){var e=$("#err");if(e)e.textContent=msg;else alert(msg)}
+ async function ensureProfile(user, suggestedName){
+  var got=await sb.from('profiles').select('id,username,bio').eq('id',user.id).maybeSingle();
+  if(got.error) throw got.error;
+  if(got.data) return got.data;
+  var meta=(user.user_metadata&&user.user_metadata.username)||suggestedName||((user.email||'player').split('@')[0]);
+  var clean=String(meta).replace(/[^A-Za-z0-9_]/g,'').slice(0,20);
+  if(clean.length<3) clean=('Player'+user.id.slice(0,5)).slice(0,20);
+  var ins=await sb.from('profiles').insert({id:user.id,username:clean}).select('id,username,bio').single();
+  if(ins.error) throw ins.error;
+  return ins.data;
  }
- function makeSalt(){var bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return Array.from(bytes).map(function(b){return b.toString(16).padStart(2,"0")}).join("")}
+ async function enter(user, profile){
+  currentUser=user;var name=profile.username;
+  $("#who").textContent=name;$("#hi").textContent=name;
+  $("#login").classList.add("hide");$("#home").classList.remove("hide");window.scrollTo(0,0);
+  await loadProfiles('');
+ }
+ async function loadProfiles(term){
+  var box=$("#profileResults");if(!box)return;
+  if(!currentUser){box.textContent='Please log in first.';return;}
+  box.textContent='Loading profiles…';
+  var q=sb.from('profiles').select('username,bio').order('username').limit(30);
+  if(term)q=q.ilike('username','%'+term.replace(/[%_]/g,'')+'%');
+  var r=await q;
+  if(r.error){box.textContent='Could not load profiles: '+r.error.message;return;}
+  if(!r.data.length){box.textContent='No profiles found yet.';return;}
+  box.innerHTML=r.data.map(function(p){return '<div style="padding:9px 0;border-bottom:1px solid #eee"><b>'+escapeHtml(p.username)+'</b><div style="color:#666">'+escapeHtml(p.bio||'No bio yet.')+'</div></div>'}).join('');
+ }
+ function escapeHtml(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
  $("#signup").onclick=async function(){
-  var u=$("#su").value.trim(),p=$("#sp").value,e=$("#err"),key=u.toLowerCase();
-  if(!$("#bm").value||!$("#bd").value||!$("#by").value){e.textContent="Please enter your birthday.";return}
-  if(u.length<3){e.textContent="Username must be at least 3 characters.";return}
-  if(!/^[A-Za-z0-9_]+$/.test(u)){e.textContent="Usernames can only use letters, numbers and _.";return}
-  if(p.length<8){e.textContent="Password must be at least 8 characters.";return}
-  var accounts=getAccounts();if(accounts[key]){e.textContent="That username already exists. Please log in instead.";return}
-  try{var salt=makeSalt(),hash=await passwordHash(p,salt);accounts[key]={username:u,salt:salt,hash:hash};saveAccounts(accounts);e.textContent="Account created and saved in this browser!";$("#su").value="";$("#sp").value="";enter(u)}
-  catch(err){e.textContent=err.message||"Couldn't save the account in this browser."}
+  var u=$("#su").value.trim(), email=$("#se").value.trim(), p=$("#sp").value;
+  if(!$("#bm").value||!$("#bd").value||!$("#by").value){showError('Please enter your birthday.');return}
+  if(u.length<3||u.length>20||!/^[A-Za-z0-9_]+$/.test(u)){showError('Username must be 3–20 characters and use only letters, numbers, or _.');return}
+  if(!email||!email.includes('@')){showError('Please enter a valid email address.');return}
+  if(p.length<8){showError('Password must be at least 8 characters.');return}
+  showError('Creating account…');
+  var r=await sb.auth.signUp({email:email,password:p,options:{data:{username:u}}});
+  if(r.error){showError(r.error.message);return}
+  if(!r.data.session){showError('Account created! Check your email for a confirmation link, then log in with your email and password.');return}
+  try{var profile=await ensureProfile(r.data.user,u);showError('');await enter(r.data.user,profile)}catch(err){showError('Account created, but profile setup failed: '+err.message)}
  };
- $("#quick").onsubmit=async function(ev){ev.preventDefault();var u=$("#qu").value.trim(),p=$("#qp").value,e=$("#err");
-  if(!u||!p){e.textContent="Enter your username and password.";return}
-  var account=getAccounts()[u.toLowerCase()];if(!account){e.textContent="Account not found. Please sign up first in this browser.";return}
-  try{var hash=await passwordHash(p,account.salt);if(hash!==account.hash){e.textContent="Incorrect username or password.";return}e.textContent="";$("#qp").value="";enter(account.username)}
-  catch(err){e.textContent=err.message||"Couldn't log in. Please try again."}
+ $("#quick").onsubmit=async function(ev){
+  ev.preventDefault();var email=$("#qu").value.trim(), password=$("#qp").value;
+  if(!email||!password){showError('Enter your email and password to log in.');return}
+  showError('Logging in…');var r=await sb.auth.signInWithPassword({email:email,password:password});
+  if(r.error){showError(r.error.message);return}
+  try{var profile=await ensureProfile(r.data.user);showError('');await enter(r.data.user,profile)}catch(err){showError('Could not load your profile: '+err.message)}
  };
- $("#out").onclick=function(ev){ev.preventDefault();$("#home").classList.add("hide");$("#login").classList.remove("hide")};
+ $("#searchProfiles").onclick=function(){loadProfiles($("#profileSearch").value.trim())};
+ $("#refreshProfiles").onclick=function(ev){ev.preventDefault();loadProfiles($("#profileSearch").value.trim())};
+ $("#out").onclick=async function(ev){ev.preventDefault();await sb.auth.signOut();currentUser=null;$("#home").classList.add("hide");$("#login").classList.remove("hide")};
+ sb.auth.getSession().then(async function(r){if(r.data.session){try{var profile=await ensureProfile(r.data.session.user);await enter(r.data.session.user,profile)}catch(e){console.warn(e)}}});
 })();
 </script>
 <div id="game" class="hide">
@@ -339,8 +352,8 @@ grp('Face','face',['smile','cool','silly','grumpy']);var hatBox=mk('div','grp');
 function hatGrp(){hatBox.innerHTML='<b>Hat</b> <span style="color:#757575;font-size:11px">(buy more in Shop)</span><br>';['none'].concat(owned).forEach(function(c){var s=mk('button','ch');s.type='button';s.textContent=c;s.dataset.k='hat';s.dataset.c=c;s.onclick=function(){st.hat=c;apply()};hatBox.appendChild(s)});mark()}
 var rb=mk('button','btn');rb.textContent='Randomize';rb.style.width='auto';rb.onclick=function(){function p(){return PAL[Math.floor(Math.random()*PAL.length)]}var sk=p();st.head=sk;st.arms=sk;st.torso=p();st.legs=p();st.face=['smile','cool','silly','grumpy'][Math.floor(Math.random()*4)];var hs=['none'].concat(owned);st.hat=hs[Math.floor(Math.random()*hs.length)];apply()};ui.appendChild(rb);
 mark();
-function show(av){document.getElementById('homeView').classList.toggle('hide',av!==0);document.getElementById('avView').classList.toggle('hide',av!==1);document.getElementById('profileView').classList.toggle('hide',av!==2);document.getElementById('shopView').classList.add('hide');document.getElementById('navHome').classList.toggle('on',av===0);document.getElementById('navAv').classList.toggle('on',av===1);document.getElementById('navProfile').classList.toggle('on',av===2);document.getElementById('navShop').classList.remove('on');window.scrollTo(0,0)}
-[['navAv',1],['editAv',1],['navHome',0],['backHome',0],['navProfile',2],['profileBack',0],['profileEditAv',1]].forEach(function(p){document.getElementById(p[0]).addEventListener('click',function(e){e.preventDefault();show(p[1])})});
+function show(av){document.getElementById('homeView').classList.toggle('hide',av);document.getElementById('avView').classList.toggle('hide',!av);document.getElementById('navHome').classList.toggle('on',!av);document.getElementById('navAv').classList.toggle('on',av);window.scrollTo(0,0)}
+[['navAv',1],['editAv',1],['navHome',0],['backHome',0]].forEach(function(p){document.getElementById(p[0]).addEventListener('click',function(e){e.preventDefault();show(p[1])})});
 var HATS={cap:'🧢',tophat:'🎩',crown:'👑',horns:'😈',party:'🥳',halo:'😇',bunny:'🐰'};
 var NAMES={cap:'Red Cap',tophat:'Top Hat',crown:'Golden Crown',horns:'Horns',party:'Party Hat',halo:'Halo',bunny:'Bunny Ears'};
 var grid=document.getElementById('shopGrid');
@@ -351,7 +364,7 @@ function renderShop(msg){document.getElementById('rbx').textContent='R$ '+shop.r
  document.getElementById('shopMsg').textContent=msg||''}
 function buy(k){if(owned.indexOf(k)>-1)return;if(shop.r<1){renderShop('Not enough Robux. Claim your free Robux below.');return}shop.r-=1;owned.push(k);saveShop();hatGrp();renderShop('You bought the '+NAMES[k]+'. Wear it in Avatar.')}
 document.getElementById('claim').onclick=function(){var t=new Date().toDateString();if(shop.d===t){renderShop('You already claimed today. Come back tomorrow.');return}shop.r+=5;shop.d=t;saveShop();renderShop('You got R$ 5.')};
-function showShop(e){e.preventDefault();['homeView','avView','profileView'].forEach(function(i){document.getElementById(i).classList.add('hide')});document.getElementById('shopView').classList.remove('hide');['navHome','navAv','navProfile'].forEach(function(i){document.getElementById(i).classList.remove('on')});document.getElementById('navShop').classList.add('on');renderShop();window.scrollTo(0,0)}
+function showShop(e){e.preventDefault();['homeView','avView'].forEach(function(i){document.getElementById(i).classList.add('hide')});document.getElementById('shopView').classList.remove('hide');['navHome','navAv'].forEach(function(i){document.getElementById(i).classList.remove('on')});document.getElementById('navShop').classList.add('on');renderShop();window.scrollTo(0,0)}
 var baseShow=show;show=function(av){document.getElementById('shopView').classList.add('hide');document.getElementById('navShop').classList.remove('on');baseShow(av)};
 ['navShop','navCat'].forEach(function(i){document.getElementById(i).addEventListener('click',showShop)});
 document.getElementById('shopToAv').onclick=function(){show(1)};
